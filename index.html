@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" id="theme-color" content="#E6F7FF">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Nata">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="styles.css">
+  <title>Nata</title>
+</head>
+<body data-tab="today">
+  <div class="sea" aria-hidden="true">
+    <i style="--x:6%;--s:14px;--t:15s;--d:-2s"></i><i style="--x:18%;--s:8px;--t:11s;--d:-7s"></i>
+    <i style="--x:31%;--s:20px;--t:19s;--d:-11s"></i><i style="--x:47%;--s:10px;--t:13s;--d:-4s"></i>
+    <i style="--x:58%;--s:16px;--t:17s;--d:-14s"></i><i style="--x:70%;--s:7px;--t:10s;--d:-1s"></i>
+    <i style="--x:79%;--s:22px;--t:21s;--d:-9s"></i><i style="--x:90%;--s:11px;--t:14s;--d:-6s"></i>
+  </div>
+
+  <main id="view"></main>
+
+  <div class="fab-wrap">
+    <div class="fab">
+      <svg class="fab-tent" viewBox="0 0 48 44" aria-hidden="true">
+        <path d="M6 42C1 28 6 11 22 8C33 6 40 14 35 21C32 25 26 23 27 18" fill="none" stroke="#0D2B6B" stroke-width="13" stroke-linecap="round"/>
+        <path d="M6 42C1 28 6 11 22 8C33 6 40 14 35 21C32 25 26 23 27 18" fill="none" stroke="#3E95FF" stroke-width="7.5" stroke-linecap="round"/>
+        <path d="M7 34C5 24 10 15 20 13" fill="none" stroke="#8FCDFF" stroke-width="2.2" stroke-linecap="round"/>
+      </svg>
+      <button class="fab-btn" data-act="add">＋ Add food</button>
+    </div>
+  </div>
+
+  <nav class="tabs">
+    <button data-tab="today" class="active">
+      <svg class="ti" viewBox="0 0 32 32" aria-hidden="true"><path d="M16 3C21 5 26 12 26 19C26 25 21 28.5 16 28.5C11 28.5 6 25 6 19C6 12 11 5 16 3Z" fill="#3E95FF" stroke="#0D2B6B" stroke-width="2.4" stroke-linejoin="round"/><ellipse cx="12.5" cy="10.5" rx="1.6" ry="3" transform="rotate(25 12.5 10.5)" fill="#fff" opacity=".6"/><circle cx="12.3" cy="19" r="2.4" fill="#0D2B6B"/><circle cx="19.7" cy="19" r="2.4" fill="#0D2B6B"/><circle cx="13" cy="18.2" r=".8" fill="#fff"/><circle cx="20.4" cy="18.2" r=".8" fill="#fff"/><path d="M14 23.3Q16 25.3 18 23.3" fill="none" stroke="#0D2B6B" stroke-width="1.8" stroke-linecap="round"/></svg>
+      Today
+    </button>
+    <button data-tab="meals">
+      <svg class="ti" viewBox="0 0 32 32" aria-hidden="true"><path d="M12 8.5q-2-2.2 0-4.4M17.5 8.5q-2-2.2 0-4.4" fill="none" stroke="#0D2B6B" stroke-width="2" stroke-linecap="round"/><path d="M7 15C8 10.5 12.5 9.5 16 11.5C19.5 9 24.5 10.5 25 15Z" fill="#FFD43B" stroke="#0D2B6B" stroke-width="2.2" stroke-linejoin="round"/><path d="M4 15H28C28 22 23 27.5 16 27.5C9 27.5 4 22 4 15Z" fill="#FF7A2E" stroke="#0D2B6B" stroke-width="2.4" stroke-linejoin="round"/><path d="M8.5 19.5Q10 23 13.5 24" fill="none" stroke="#FFC09A" stroke-width="2" stroke-linecap="round"/></svg>
+      Meals
+    </button>
+    <button data-tab="ingredients">
+      <svg class="ti" viewBox="0 0 32 32" aria-hidden="true"><path d="M21 9.5C21 5.5 23 3 26.5 3C26.5 6.5 24.5 8.5 21 9.5Z" fill="#2FBF71" stroke="#0D2B6B" stroke-width="2" stroke-linejoin="round"/><path d="M22 11C25 8.5 28 9 29.5 11.5C26.5 12.5 24.5 12.5 22 11Z" fill="#2FBF71" stroke="#0D2B6B" stroke-width="2" stroke-linejoin="round"/><path d="M19 9C23 9 25 12 23 15L8.5 27.8C6.8 29 4.5 27.4 5.6 25.6L16 11C17 9.8 18 9 19 9Z" fill="#FF7A2E" stroke="#0D2B6B" stroke-width="2.4" stroke-linejoin="round"/><path d="M12.5 18.5l2.6 1.6M16 14.5l2.2 1.3M9.5 23l2 1.2" stroke="#0D2B6B" stroke-width="1.8" stroke-linecap="round"/></svg>
+      Ingredients
+    </button>
+    <button data-tab="more">
+      <svg class="ti" viewBox="0 0 32 32" aria-hidden="true"><path d="M16 4L19.5 12.1L28.4 13L21.7 18.9L23.6 27.5L16 23L8.4 27.5L10.3 18.9L3.6 13L12.5 12.1Z" fill="#FFD43B" stroke="#0D2B6B" stroke-width="2.4" stroke-linejoin="round"/><circle cx="14" cy="16" r="1.5" fill="#0D2B6B"/><circle cx="18" cy="16" r="1.5" fill="#0D2B6B"/><path d="M14.5 19Q16 20.4 17.5 19" fill="none" stroke="#0D2B6B" stroke-width="1.6" stroke-linecap="round"/></svg>
+      More
+    </button>
+  </nav>
+
+  <div class="sheet" id="sheet1"></div>
+  <div class="sheet" id="sheet2"></div>
+  <div id="toast" role="status" aria-live="polite">
+    <svg class="tface" viewBox="0 0 32 32" aria-hidden="true"><path d="M16 3C21 5 26 12 26 19C26 25 21 28.5 16 28.5C11 28.5 6 25 6 19C6 12 11 5 16 3Z" fill="#3E95FF" stroke="#0D2B6B" stroke-width="2.4" stroke-linejoin="round"/><circle cx="12.3" cy="19" r="2.4" fill="#0D2B6B"/><circle cx="19.7" cy="19" r="2.4" fill="#0D2B6B"/><circle cx="13" cy="18.2" r=".8" fill="#fff"/><circle cx="20.4" cy="18.2" r=".8" fill="#fff"/><path d="M13.6 23Q16 26 18.4 23Z" fill="#081536"/></svg>
+    <span class="tmsg"></span>
+  </div>
+
+  <script src="lula.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
