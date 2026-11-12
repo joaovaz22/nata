@@ -7,41 +7,42 @@ const STORAGE_KEY = 'nata-v1';
 const PREFS_KEY = 'nata-prefs';   // sound + theme only; your data stays in nata-v1
 const DAY_START_HOUR = 5;         // the day "resets" at 05:00
 const DEFAULT_GOAL = 2000;
+const DEFAULT_PROT_GOAL = 100;    // grams of protein per day
 const CELEBRATE_WITHIN = 0.05;    // big celebration when you land within ±5% of the goal
 
-// Starter ingredient base: [name, emoji, unit, kcal]
-// unit 'g' / 'ml' -> kcal per 100 g / 100 ml ; unit 'un' -> kcal per unit
+// Starter ingredient base: [name, emoji, unit, kcal, protein g]
+// unit 'g' / 'ml' -> per 100 g / 100 ml ; unit 'un' -> per unit
 const SEED_INGREDIENTS = [
-  ['Egg', '🥚', 'un', 72],
-  ['Bread', '🍞', 'g', 265],
-  ['Oats', '🌾', 'g', 389],
-  ['Milk (semi-skimmed)', '🥛', 'ml', 47],
-  ['Greek yogurt (plain)', '🥣', 'g', 97],
-  ['Cheese (sliced)', '🧀', 'g', 356],
-  ['Butter', '🧈', 'g', 717],
-  ['Olive oil', '🫒', 'g', 884],
-  ['Rice (cooked)', '🍚', 'g', 130],
-  ['Pasta (cooked)', '🍝', 'g', 158],
-  ['Potato (boiled)', '🥔', 'g', 87],
-  ['Sweet potato', '🍠', 'g', 86],
-  ['Chicken breast (cooked)', '🍗', 'g', 165],
-  ['Minced beef (cooked)', '🥩', 'g', 250],
-  ['Salmon', '🐟', 'g', 208],
-  ['Tuna (canned, in water)', '🐟', 'g', 116],
-  ['Chickpeas (cooked)', '🫘', 'g', 164],
-  ['Beans (cooked)', '🫘', 'g', 127],
-  ['Broccoli', '🥦', 'g', 34],
-  ['Tomato', '🍅', 'g', 18],
-  ['Lettuce', '🥬', 'g', 15],
-  ['Carrot', '🥕', 'g', 41],
-  ['Avocado', '🥑', 'g', 160],
-  ['Banana', '🍌', 'g', 89],
-  ['Apple', '🍎', 'g', 52],
-  ['Peanut butter', '🥜', 'g', 588],
-  ['Almonds', '🌰', 'g', 579],
-  ['Honey', '🍯', 'g', 304],
-  ['Dark chocolate', '🍫', 'g', 546],
-  ['Pastel de nata', '🥧', 'un', 290],
+  ['Egg', '🥚', 'un', 72, 6.3],
+  ['Bread', '🍞', 'g', 265, 9],
+  ['Oats', '🌾', 'g', 389, 13],
+  ['Milk (semi-skimmed)', '🥛', 'ml', 47, 3.4],
+  ['Greek yogurt (plain)', '🥣', 'g', 97, 9],
+  ['Cheese (sliced)', '🧀', 'g', 356, 25],
+  ['Butter', '🧈', 'g', 717, 0.9],
+  ['Olive oil', '🫒', 'g', 884, 0],
+  ['Rice (cooked)', '🍚', 'g', 130, 2.7],
+  ['Pasta (cooked)', '🍝', 'g', 158, 5.8],
+  ['Potato (boiled)', '🥔', 'g', 87, 1.9],
+  ['Sweet potato', '🍠', 'g', 86, 1.6],
+  ['Chicken breast (cooked)', '🍗', 'g', 165, 31],
+  ['Minced beef (cooked)', '🥩', 'g', 250, 26],
+  ['Salmon', '🐟', 'g', 208, 20],
+  ['Tuna (canned, in water)', '🐟', 'g', 116, 26],
+  ['Chickpeas (cooked)', '🫘', 'g', 164, 8.9],
+  ['Beans (cooked)', '🫘', 'g', 127, 8.7],
+  ['Broccoli', '🥦', 'g', 34, 2.8],
+  ['Tomato', '🍅', 'g', 18, 0.9],
+  ['Lettuce', '🥬', 'g', 15, 1.4],
+  ['Carrot', '🥕', 'g', 41, 0.9],
+  ['Avocado', '🥑', 'g', 160, 2],
+  ['Banana', '🍌', 'g', 89, 1.1],
+  ['Apple', '🍎', 'g', 52, 0.3],
+  ['Peanut butter', '🥜', 'g', 588, 25],
+  ['Almonds', '🌰', 'g', 579, 21],
+  ['Honey', '🍯', 'g', 304, 0.3],
+  ['Dark chocolate', '🍫', 'g', 546, 7.8],
+  ['Pastel de nata', '🥧', 'un', 290, 4],
 ];
 
 // What Lula says to you. Edit freely! (bucket -> Lula mood is in MOOD_OF below)
@@ -131,15 +132,29 @@ function dayLabel(key) {
   const [y, m, d] = key.split('-').map(Number);
   return new Date(y, m - 1, d).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
 }
+// Item units: 'g' / 'ml' / 'un' (from an ingredient), 'kcal' (plain calories), 'prot' (plain protein, grams)
 function itemKcal(it) {
   const q = num(it.qty);
   if (it.unit === 'kcal') return q;
+  if (it.unit === 'prot') return 0;
   if (it.unit === 'un') return it.per * q;
   return (it.per * q) / 100;
 }
+function itemProt(it) {
+  const q = num(it.qty), p = it.prot || 0;
+  if (it.unit === 'prot') return q;
+  if (it.unit === 'kcal') return 0;
+  if (it.unit === 'un') return p * q;
+  return (p * q) / 100;
+}
 const sumKcal = (items) => items.reduce((a, it) => a + itemKcal(it), 0);
-const unitShort = (u) => (u === 'un' ? '×' : u === 'kcal' ? 'kcal' : u);
-const perText = (u, per) => (u === 'un' ? `${fmt(per)} kcal each` : u === 'kcal' ? 'calories only' : `${fmt(per)} kcal / 100 ${u}`);
+const sumProt = (items) => items.reduce((a, it) => a + itemProt(it), 0);
+const fmtG = (n) => String(Math.round((n || 0) * 10) / 10);   // protein per ingredient: one decimal
+const unitShort = (u) => (u === 'un' ? '×' : u === 'kcal' ? 'kcal' : u === 'prot' ? 'g' : u);
+const perText = (u, per, prot) => (
+  u === 'kcal' ? 'calories only' : u === 'prot' ? 'grams of protein'
+    : u === 'un' ? `${fmt(per)} kcal · ${fmtG(prot)} g protein each`
+      : `${fmt(per)} kcal · ${fmtG(prot)} g protein / 100 ${u}`);
 
 // Count a number from -> to, calling draw(value) each frame (text only, no layout work)
 function roll(el, from, to, draw, dur = 800) {
@@ -162,15 +177,16 @@ function bump(el, s = 1.08) {
    State (saved on the phone in localStorage)
    ========================================================= */
 function seedState() {
-  const ingredients = SEED_INGREDIENTS.map(([name, emoji, unit, per]) => ({ id: uid(), name, emoji, unit, per, used: 0 }));
+  const ingredients = SEED_INGREDIENTS.map(([name, emoji, unit, per, prot]) => ({ id: uid(), name, emoji, unit, per, prot, used: 0 }));
   const byName = (n) => ingredients.find((i) => i.name === n);
   const mk = (name, emoji, list) => ({
     id: uid(), name, emoji,
-    items: list.map(([n, qty]) => { const i = byName(n); return { ingId: i.id, name: i.name, emoji: i.emoji, unit: i.unit, per: i.per, qty }; }),
+    items: list.map(([n, qty]) => { const i = byName(n); return { ingId: i.id, name: i.name, emoji: i.emoji, unit: i.unit, per: i.per, prot: i.prot, qty }; }),
   });
   return {
     v: 1,
     goal: DEFAULT_GOAL,
+    protGoal: DEFAULT_PROT_GOAL,
     ingredients,
     meals: [
       mk('Morning oats', '🥣', [['Oats', 50], ['Milk (semi-skimmed)', 200], ['Banana', 100]]),
@@ -179,10 +195,27 @@ function seedState() {
     log: {},
   };
 }
+// Older saves have no protein: fill it in (starter ingredients by name, anything else 0 g)
+const SEED_PROT = Object.fromEntries(SEED_INGREDIENTS.map((r) => [r[0], r[4]]));
+function migrate(s) {
+  if (!(s.protGoal > 0)) s.protGoal = DEFAULT_PROT_GOAL;
+  s.ingredients.forEach((i) => { if (typeof i.prot !== 'number') i.prot = SEED_PROT[i.name] ?? 0; });
+  const fill = (it) => {
+    if (typeof it.prot === 'number') return;
+    const ing = it.ingId && s.ingredients.find((i) => i.id === it.ingId);
+    it.prot = ing ? ing.prot : (SEED_PROT[it.name] ?? 0);
+  };
+  s.meals.forEach((m) => m.items.forEach(fill));
+  Object.values(s.log).forEach((list) => list.forEach((e) => {
+    e.items.forEach(fill);
+    if (typeof e.prot !== 'number') e.prot = Math.round(sumProt(e.items));
+  }));
+  return s;
+}
 function loadState() {
   try {
     const s = JSON.parse(localStorage.getItem(STORAGE_KEY));
-    if (s && Array.isArray(s.ingredients)) return s;
+    if (s && Array.isArray(s.ingredients)) return migrate(s);
   } catch { /* fall through */ }
   return seedState();
 }
@@ -208,6 +241,7 @@ matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change', applyPre
 
 const todayEntries = () => S.log[dayKey()] || [];
 const eatenOn = (key) => (S.log[key] || []).reduce((a, e) => a + e.kcal, 0);
+const protOn = (key) => (S.log[key] || []).reduce((a, e) => a + (e.prot || 0), 0);
 const ingById = (id) => S.ingredients.find((i) => i.id === id);
 const mealById = (id) => S.meals.find((m) => m.id === id);
 const sortedIngredients = () => [...S.ingredients].sort((a, b) => (b.used || 0) - (a.used || 0) || a.name.localeCompare(b.name));
@@ -307,7 +341,7 @@ function quipFor(eaten, goal, count) { return pick(QUIPS[bucketFor(eaten, goal, 
 function ringColor(p) { return p <= 0.7 ? 'var(--good)' : p <= 1 ? 'var(--warn)' : 'var(--bad)'; }
 
 const RING_R = 106, RING_C = 2 * Math.PI * RING_R;
-let lula = null, lulaHost = null, shownLeft = null, shownEaten = null, listIds = null;
+let lula = null, lulaHost = null, shownLeft = null, shownEaten = null, shownProt = null, listIds = null;
 
 function ensureLula(mood) {
   if (!lulaHost) { lulaHost = document.createElement('div'); lulaHost.className = 'lula-host'; }
@@ -331,6 +365,10 @@ function todaySkeleton() {
         <div class="lula-slot" id="lula-slot"></div>
       </div>
       <div class="num-wrap" id="t-numwrap" aria-live="polite"><div class="big-num" id="t-num">0</div><div class="big-lbl" id="t-lbl">kcal left</div></div>
+      <div class="prot" id="t-prot">
+        <div class="prot-txt"><span class="prot-k">Protein</span><b id="t-pnum">0</b><span>/ <span id="t-pgoal">0</span> g</span></div>
+        <div class="prot-track" aria-hidden="true"><i id="t-pbar"></i></div>
+      </div>
       <div class="pills"><span class="pill">Eaten <b id="t-eaten">0</b></span><span class="pill">Goal <b id="t-goal">0</b></span></div>
     </div>
     <h3>Eaten today</h3>
@@ -342,7 +380,7 @@ function renderToday({ hold } = {}) {
   const view = $('#view');
   if (!$('#today', view)) {
     view.innerHTML = todaySkeleton();
-    shownLeft = shownEaten = listIds = null;
+    shownLeft = shownEaten = shownProt = listIds = null;
     const L = ensureLula();
     $('#lula-slot').appendChild(lulaHost);
     if (!L) $('#lula-slot').textContent = '🦑';
@@ -352,7 +390,20 @@ function renderToday({ hold } = {}) {
   if (hold) entries = entries.filter((e) => e.id !== hold.hideId);
   const eaten = entries.reduce((a, e) => a + e.kcal, 0);
   updateHero(eaten, S.goal, entries.length);
+  updateProt(entries.reduce((a, e) => a + (e.prot || 0), 0), S.protGoal);
   updateList(entries);
+}
+
+function updateProt(prot, goal) {
+  const pEl = $('#t-pnum');
+  roll(pEl, shownProt ?? prot, prot, (v) => { pEl.textContent = fmt(v); });
+  shownProt = prot;
+  $('#t-pgoal').textContent = fmt(goal);
+  const k = Math.min(prot / goal, 1);
+  $('#t-prot').classList.toggle('hit', prot >= goal);
+  $('#t-prot').setAttribute('aria-label', `Protein: ${fmt(prot)} of ${fmt(goal)} grams`);
+  const bar = $('#t-pbar');
+  requestAnimationFrame(() => { bar.style.transform = `scaleX(${k})`; });
 }
 
 function updateHero(eaten, goal, count) {
@@ -394,7 +445,7 @@ function updateList(entries) {
     const cls = !prev ? ' rise-in' : prev.has(e.id) ? '' : ' pop-in';
     return `<button class="row-btn${cls}" style="--i:${i}" data-act="edit-entry" data-id="${e.id}">
       <span class="em">${esc(e.emoji || '🍽️')}</span>
-      <span class="main"><div class="title">${esc(e.name)}</div><div class="meta">${pad(t.getHours())}:${pad(t.getMinutes())} · ${esc(parts)}</div></span>
+      <span class="main"><div class="title">${esc(e.name)}</div><div class="meta">${pad(t.getHours())}:${pad(t.getMinutes())} · ${fmt(e.prot || 0)} g protein · ${esc(parts)}</div></span>
       <span class="kcal">${fmt(e.kcal)} <small>kcal</small></span>
     </button>`;
   }).join('')}</div>`;
@@ -413,7 +464,7 @@ function feedAndShow(entry, firstToday) {
 }
 function afterLog(firstToday) {
   const left = S.goal - eatenOn(dayKey());
-  toast(`${pick(QUIPS.logged, Date.now())} ${left >= 0 ? fmt(left) + ' kcal left' : fmt(-left) + ' kcal over'}`);
+  toast(`${pick(QUIPS.logged, Date.now())} ${left >= 0 ? fmt(left) + ' kcal left' : fmt(-left) + ' kcal over'} · ${fmt(protOn(dayKey()))} g protein`);
   if (Math.abs(left) <= S.goal * CELEBRATE_WITHIN) {
     confetti(30);
     if (lula && lula.mood !== 'target') lula.celebrate();   // setMood('target') already celebrates
@@ -434,7 +485,7 @@ function openAdd() {
     <div class="sheet-body">
       <div class="big-choice">
         <button data-act="scratch"><span>🧑‍🍳</span>Build a meal</button>
-        <button data-act="quick"><span>⚡</span>Just calories</button>
+        <button data-act="quick"><span>⚡</span>Just numbers</button>
       </div>
       <h3>Saved meals</h3>
       <input class="search" id="add-search" placeholder="Search meals…" autocomplete="off">
@@ -448,7 +499,7 @@ function mealList(q) {
   return `<div class="card">${meals.map((m, i) => `
     <button class="row-btn rise-in" style="--i:${i}" data-act="use-meal" data-id="${m.id}">
       <span class="em">${esc(m.emoji || '🍽️')}</span>
-      <span class="main"><div class="title">${esc(m.name)}</div><div class="meta">${esc(m.items.map((it) => it.name).join(', '))}</div></span>
+      <span class="main"><div class="title">${esc(m.name)}</div><div class="meta">${fmt(sumProt(refreshItems(m.items)))} g protein · ${esc(m.items.map((it) => it.name).join(', '))}</div></span>
       <span class="kcal">${fmt(sumKcal(refreshItems(m.items)))} <small>kcal</small></span>
     </button>`).join('')}</div>`;
 }
@@ -463,7 +514,7 @@ let draft = null;
 function refreshItems(items) {
   return items.map((it) => {
     const ing = it.ingId && ingById(it.ingId);
-    return ing ? { ...it, name: ing.name, emoji: ing.emoji, unit: ing.unit, per: ing.per } : { ...it };
+    return ing ? { ...it, name: ing.name, emoji: ing.emoji, unit: ing.unit, per: ing.per, prot: ing.prot || 0 } : { ...it };
   });
 }
 
@@ -497,6 +548,7 @@ function renderComposer() {
       <div id="d-items">${itemsHtml(-1, true)}</div>
       <button class="btn ghost" data-act="pick-ing">＋ Add ingredient</button>
       <button class="btn ghost" data-act="add-kcal">＋ Add plain calories</button>
+      <button class="btn ghost" data-act="add-prot">＋ Add plain protein</button>
       ${saveOpt}
       ${delBtn}
     </div>
@@ -516,19 +568,24 @@ function itemsHtml(newIdx = -1, first = false) {
   return draft.items.map((it, i) => `
     <div class="item${i === newIdx ? ' pop-in' : first ? ' rise-in' : ''}" style="--i:${i}">
       <span class="em">${esc(it.emoji || '•')}</span>
-      <div class="nm">${esc(it.name)}<small>${perText(it.unit, it.per)}</small></div>
+      <div class="nm">${esc(it.name)}<small>${perText(it.unit, it.per, it.prot)}</small></div>
       <label class="qtybox"><input class="qty" data-i="${i}" inputmode="decimal" value="${esc(it.qty)}" placeholder="0" aria-label="Amount of ${esc(it.name)}"><span class="u">${unitShort(it.unit)}</span></label>
-      <span class="ik" id="ik-${i}">${fmt(itemKcal(it))}</span>
+      <span class="ik" id="ik-${i}">${ikText(it)}</span>
       <button class="rm" data-act="rm-item" data-i="${i}" aria-label="Remove">✕</button>
     </div>`).join('');
 }
 
+// Per-item number on the right of each composer row (protein-only rows show grams)
+const ikText = (it) => (it.unit === 'prot' ? `${fmt(itemProt(it))}<small>g</small>` : fmt(itemKcal(it)));
+
 function updateTotals() {
   const total = Math.round(sumKcal(draft.items));
+  const prot = Math.round(sumProt(draft.items));
   const tEl = $('#d-total');
-  if (tEl.dataset.v !== undefined && tEl.dataset.v !== String(total)) bump(tEl, 1.06);
-  tEl.dataset.v = total;
-  tEl.innerHTML = `${fmt(total)} <small>kcal</small>`;
+  const key = `${total}|${prot}`;
+  if (tEl.dataset.v !== undefined && tEl.dataset.v !== key) bump(tEl, 1.06);
+  tEl.dataset.v = key;
+  tEl.innerHTML = `${fmt(total)} <small>kcal</small><span class="tp">${fmt(prot)} g protein</span>`;
   const after = $('#d-after');
   let mood = total ? 'light' : 'hungry';
   if (draft.mode !== 'log') { after.textContent = ''; mood = total ? 'cruising' : 'hungry'; }
@@ -551,7 +608,7 @@ function focusLastQty() {
   body.scrollTo({ top: Math.max(0, row.offsetTop - body.clientHeight / 2), behavior: reduced() ? 'auto' : 'smooth' });
 }
 function addIngredientToDraft(ing) {
-  draft.items.push({ ingId: ing.id, name: ing.name, emoji: ing.emoji, unit: ing.unit, per: ing.per, qty: '' });
+  draft.items.push({ ingId: ing.id, name: ing.name, emoji: ing.emoji, unit: ing.unit, per: ing.per, prot: ing.prot || 0, qty: '' });
   $('#d-items').innerHTML = itemsHtml(draft.items.length - 1);
   updateTotals();
   focusLastQty();
@@ -576,17 +633,18 @@ function commitDraft() {
 
   if (!items.length) return toast('Type an amount for at least one item');
   const kcal = Math.round(sumKcal(items));
+  const prot = Math.round(sumProt(items));
   const name = d.name || (items.length === 1 ? items[0].name : 'Meal');
   let newEntry = null, firstToday = false;
 
   if (d.entryId) {
     const list = S.log[d.entryDay] || [];
     const e = list.find((x) => x.id === d.entryId);
-    if (e) Object.assign(e, { name, emoji: d.emoji, items, kcal });
+    if (e) Object.assign(e, { name, emoji: d.emoji, items, kcal, prot });
   } else {
     const day = dayKey();
     firstToday = !(S.log[day] || []).length;
-    newEntry = { id: uid(), t: Date.now(), name, emoji: d.emoji, items, kcal };
+    newEntry = { id: uid(), t: Date.now(), name, emoji: d.emoji, items, kcal, prot };
     (S.log[day] ||= []).push(newEntry);
     items.forEach((it) => { const ing = it.ingId && ingById(it.ingId); if (ing) ing.used = (ing.used || 0) + 1; });
   }
@@ -636,7 +694,7 @@ function pickerList(q) {
     ${list.length ? `<div class="card">${list.map((i) => `
       <button class="row-btn" data-act="pick" data-id="${i.id}">
         <span class="em">${esc(i.emoji)}</span>
-        <span class="main"><div class="title">${esc(i.name)}</div><div class="meta">${perText(i.unit, i.per)}</div></span>
+        <span class="main"><div class="title">${esc(i.name)}</div><div class="meta">${perText(i.unit, i.per, i.prot)}</div></span>
       </button>`).join('')}</div>` : ''}`;
 }
 
@@ -656,6 +714,7 @@ function openIngForm(ing, ctx, presetName = '') {
         </div>
       </div>
       <label class="field"><span id="i-per-lbl"></span><input id="i-per" inputmode="decimal" value="${ing ? esc(ing.per) : ''}" placeholder="0"></label>
+      <label class="field"><span id="i-prot-lbl"></span><input id="i-prot" inputmode="decimal" value="${ing ? esc(ing.prot ?? 0) : ''}" placeholder="0"></label>
       <p class="hint">Tip: copy it from the nutrition label on the package.</p>
       <button class="btn primary" data-act="i-save">Save ingredient</button>
       ${ing ? '<button class="btn danger" data-act="i-delete">Delete ingredient</button>' : ''}
@@ -664,17 +723,20 @@ function openIngForm(ing, ctx, presetName = '') {
   if (!ing) setTimeout(() => $(presetName ? '#i-per' : '#i-name')?.focus(), 350);
 }
 function updatePerLabel() {
-  $('#i-per-lbl').textContent = ingForm.unit === 'un' ? 'Calories per unit (kcal)' : `Calories per 100 ${ingForm.unit} (kcal)`;
+  const per = ingForm.unit === 'un' ? 'per unit' : `per 100 ${ingForm.unit}`;
+  $('#i-per-lbl').textContent = `Calories ${per} (kcal)`;
+  $('#i-prot-lbl').textContent = `Protein ${per} (g)`;
 }
 function saveIngForm() {
   const name = $('#i-name').value.trim();
   const per = num($('#i-per').value);
+  const prot = Math.max(0, num($('#i-prot').value));
   const emoji = $('#i-emoji').value.trim() || '🍴';
   if (!name) return toast('Give it a name 🙂');
   if (per <= 0 && !confirm('0 kcal? (e.g. water, black coffee) — save anyway?')) return;
   let ing = ingForm.id && ingById(ingForm.id);
-  if (ing) Object.assign(ing, { name, emoji, unit: ingForm.unit, per });
-  else { ing = { id: uid(), name, emoji, unit: ingForm.unit, per, used: 0 }; S.ingredients.push(ing); }
+  if (ing) Object.assign(ing, { name, emoji, unit: ingForm.unit, per, prot });
+  else { ing = { id: uid(), name, emoji, unit: ingForm.unit, per, prot, used: 0 }; S.ingredients.push(ing); }
   save();
   closeSheet(2);
   if (ingForm.ctx === 'picker' && draft) addIngredientToDraft(ing);
@@ -694,7 +756,7 @@ function viewMeals() {
       <div class="meal-card">
         <button class="main" data-act="edit-meal" data-id="${m.id}">
           <span class="em">${esc(m.emoji || '🍽️')}</span>
-          <span class="txt"><div class="title">${esc(m.name)}</div><div class="meta"><span class="kc">${fmt(sumKcal(refreshItems(m.items)))} kcal</span> · ${esc(m.items.map((i) => i.name).join(', '))}</div></span>
+          <span class="txt"><div class="title">${esc(m.name)}</div><div class="meta"><span class="kc">${fmt(sumKcal(refreshItems(m.items)))} kcal</span> · ${fmt(sumProt(refreshItems(m.items)))} g protein · ${esc(m.items.map((i) => i.name).join(', '))}</div></span>
         </button>
         <button class="mini" data-act="use-meal" data-id="${m.id}">＋ Eat</button>
       </div>`).join('') : '<div class="empty"><span class="em-big">📖</span>No meals saved yet.</div>'}`;
@@ -716,7 +778,7 @@ function ingTabList() {
   return `<div class="card">${list.map((i) => `
     <button class="row-btn" data-act="edit-ing" data-id="${i.id}">
       <span class="em">${esc(i.emoji)}</span>
-      <span class="main"><div class="title">${esc(i.name)}</div><div class="meta">${perText(i.unit, i.per)}</div></span>
+      <span class="main"><div class="title">${esc(i.name)}</div><div class="meta">${perText(i.unit, i.per, i.prot)}</div></span>
     </button>`).join('')}</div>`;
 }
 
@@ -738,7 +800,7 @@ function histDays() {
 }
 function histCaption(k) {
   const v = eatenOn(k);
-  return `${dayLabel(k)} · ${v ? `${fmt(v)} kcal (${Math.round((v / S.goal) * 100)}%)` : 'nothing logged'}`;
+  return `${dayLabel(k)} · ${v ? `${fmt(v)} kcal (${Math.round((v / S.goal) * 100)}%) · ${fmt(protOn(k))} g protein` : 'nothing logged'}`;
 }
 function viewMore() {
   const days = histDays();
@@ -754,8 +816,9 @@ function viewMore() {
   }).join('');
   return `
     <h1>More</h1>
-    <h3>Daily goal</h3>
+    <h3>Daily goals</h3>
     <label class="field goal-box"><input id="goal" inputmode="numeric" value="${S.goal}" aria-label="Daily goal in kcal"><span>kcal</span></label>
+    <label class="field goal-box"><input id="prot-goal" inputmode="numeric" value="${S.protGoal}" aria-label="Daily protein goal in grams"><span>g protein</span></label>
     <h3>Last 14 days</h3>
     <div class="card hist-card">
       <div class="plot"><div class="goal-line"></div>${cols}</div>
@@ -797,7 +860,7 @@ function importData(file) {
       const s = JSON.parse(r.result);
       if (!Array.isArray(s.ingredients) || !Array.isArray(s.meals) || typeof s.log !== 'object') throw new Error();
       if (!confirm('Replace everything on this phone with this backup?')) return;
-      S = s; save(); render(); toast('Backup restored 📦');
+      S = migrate(s); save(); render(); toast('Backup restored 📦');
     } catch { toast('That file doesn\'t look like a Nata backup 🤔'); }
   };
   r.readAsText(file);
@@ -806,6 +869,8 @@ function importData(file) {
 /* =========================================================
    Events (one delegated listener for everything)
    ========================================================= */
+const PROT_ITEM = () => ({ ingId: null, name: 'Protein', emoji: '💪', unit: 'prot', per: 0, prot: 1, qty: '' });
+
 function bounceTab(btn) {
   const ic = btn.querySelector('.ti');
   if (!ic || reduced()) return;
@@ -836,7 +901,7 @@ document.addEventListener('click', (ev) => {
     case 'close1': closeSheet(1); break;
     case 'close2': closeSheet(2); break;
     case 'scratch': startDraft({}); break;
-    case 'quick': startDraft({ name: 'Quick add', emoji: '⚡', items: [{ ingId: null, name: 'Calories', emoji: '🔥', unit: 'kcal', per: 1, qty: '' }] });
+    case 'quick': startDraft({ name: 'Quick add', emoji: '⚡', items: [{ ingId: null, name: 'Calories', emoji: '🔥', unit: 'kcal', per: 1, qty: '' }, PROT_ITEM()] });
       setTimeout(() => $('#d-items input.qty')?.focus(), 350); break;
     case 'use-meal': {
       const m = mealById(id);
@@ -859,6 +924,10 @@ document.addEventListener('click', (ev) => {
     case 'pick': closeSheet(2); addIngredientToDraft(ingById(id)); break;
     case 'add-kcal':
       draft.items.push({ ingId: null, name: 'Calories', emoji: '🔥', unit: 'kcal', per: 1, qty: '' });
+      $('#d-items').innerHTML = itemsHtml(draft.items.length - 1); updateTotals(); focusLastQty();
+      break;
+    case 'add-prot':
+      draft.items.push(PROT_ITEM());
       $('#d-items').innerHTML = itemsHtml(draft.items.length - 1); updateTotals(); focusLastQty();
       break;
     case 'rm-item': {
@@ -906,7 +975,7 @@ document.addEventListener('input', (ev) => {
   if (t.matches('input.qty')) {
     const i = Number(t.dataset.i);
     draft.items[i].qty = t.value;
-    $('#ik-' + i).textContent = fmt(itemKcal(draft.items[i]));
+    $('#ik-' + i).innerHTML = ikText(draft.items[i]);
     updateTotals();
   } else if (t.id === 'add-search') $('#add-list').innerHTML = mealList(t.value);
   else if (t.id === 'p-search') $('#p-list').innerHTML = pickerList(t.value);
@@ -920,6 +989,10 @@ document.addEventListener('change', (ev) => {
     const g = Math.round(num(t.value));
     if (g >= 500 && g <= 10000) { S.goal = g; save(); toast(`Goal set to ${fmt(g)} kcal 🎯`); }
     else { t.value = S.goal; toast('Pick a goal between 500 and 10 000'); }
+  } else if (t.id === 'prot-goal') {
+    const g = Math.round(num(t.value));
+    if (g >= 10 && g <= 500) { S.protGoal = g; save(); toast(`Protein goal set to ${g} g 💪`); }
+    else { t.value = S.protGoal; toast('Pick a protein goal between 10 and 500 g'); }
   } else if (t.id === 'p-sound') {
     P.sound = t.checked; savePrefs(); applyPrefs(); if (P.sound) sfx('blip');
   } else if (t.id === 'import-file' && t.files[0]) {

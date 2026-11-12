@@ -105,6 +105,15 @@ body[data-tab="today"] .sea { opacity: 1; }
 .big-num { font-size: 68px; font-weight: 900; line-height: 1; letter-spacing: -.035em; font-variant-numeric: tabular-nums; }
 .big-lbl { font-size: 17px; font-weight: 800; color: var(--muted); margin-top: 2px; }
 .num-wrap.over .big-num, .num-wrap.over .big-lbl { color: var(--bad); }
+/* Protein: a smaller meter under the calories */
+.prot { width: min(220px, 70%); margin: 10px auto 0; }
+.prot-txt { display: flex; align-items: baseline; justify-content: center; gap: 5px; font-size: 15px; font-weight: 700; color: var(--muted); }
+.prot-txt b { font-size: 20px; font-weight: 900; color: var(--ink); font-variant-numeric: tabular-nums; }
+.prot-k { font-size: 12px; font-weight: 900; text-transform: uppercase; letter-spacing: .07em; }
+.prot-track { height: 8px; margin-top: 5px; border-radius: 999px; background: var(--track); overflow: hidden; }
+.prot-track i { display: block; height: 100%; border-radius: inherit; background: var(--focus); transform: scaleX(0); transform-origin: left center; transition: transform 1s cubic-bezier(.3, 1.3, .5, 1), background-color .4s; }
+.prot.hit .prot-track i { background: var(--good); }
+.prot.hit .prot-txt b { color: var(--good); }
 .pills { display: flex; gap: 10px; justify-content: center; margin-top: 10px; flex-wrap: wrap; }
 .pill { background: var(--card); border-radius: 999px; padding: 8px 16px; font-size: 15px; font-weight: 700; color: var(--muted); box-shadow: var(--shadow); }
 .pill b { color: var(--ink); font-weight: 900; font-variant-numeric: tabular-nums; }
@@ -193,7 +202,7 @@ body[data-tab="today"] .fab-wrap { opacity: 1; visibility: visible; transform: n
 .hint { color: var(--muted); font-size: 14px; font-weight: 600; margin: -6px 6px 16px; }
 .goal-box { display: flex; align-items: center; gap: 10px; }
 .goal-box input { font-size: 26px; font-weight: 900; }
-.goal-box span { font-weight: 800; color: var(--muted); }
+.goal-box span { font-weight: 800; color: var(--muted); white-space: nowrap; }
 
 .big-choice { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 0 0 6px; }
 .big-choice button {
@@ -247,6 +256,7 @@ body[data-tab="today"] .fab-wrap { opacity: 1; visibility: visible; transform: n
 .totals { flex: 1; min-width: 0; display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
 .totals .t { font-size: 30px; font-weight: 900; font-variant-numeric: tabular-nums; letter-spacing: -.02em; transform-origin: left center; }
 .totals .t small { font-size: 15px; font-weight: 700; color: var(--muted); }
+.totals .t .tp { display: block; font-size: 14px; font-weight: 800; color: var(--muted); letter-spacing: 0; margin-top: 2px; }
 .totals .after { font-size: 15px; font-weight: 700; color: var(--muted); text-align: right; }
 .totals .after b { font-variant-numeric: tabular-nums; }
 .totals .after b.ok { color: var(--good); }
@@ -273,6 +283,7 @@ input.qty {
 }
 .qtybox .u { color: var(--muted); font-size: 14px; font-weight: 800; }
 .item .ik { width: 50px; text-align: right; font-weight: 900; flex: none; font-size: 15px; font-variant-numeric: tabular-nums; }
+.item .ik small { font-size: 12px; color: var(--muted); margin-left: 1px; }
 .item .rm { width: 44px; height: 44px; flex: none; border: 0; background: none; border-radius: 50%; color: var(--muted); font-size: 16px; font-weight: 900; }
 .item .rm:active { transform: scale(.85); }
 

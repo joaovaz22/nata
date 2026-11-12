@@ -1,5 +1,5 @@
 // Offline cache. Bump CACHE whenever you change any file below so phones pick up the update.
-const CACHE = 'nata-lula-v1';
+const CACHE = 'nata-lula-v2';
 const ASSETS = [
   './',
   'index.html',
